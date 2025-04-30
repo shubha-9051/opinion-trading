@@ -79,6 +79,7 @@ const useWebSocket = () => {
                   id: firstTopicId,
                   ...message.data[firstTopicId]
                 };
+                console.log('useWebSocket - Setting initial topic:', firstTopic);
                 setSelectedTopic(firstTopic);
                 
                 // Store subscriptions
@@ -159,7 +160,14 @@ const useWebSocket = () => {
   const selectTopic = useCallback((topic) => {
     if (!topic) return;
     
-    setSelectedTopic(topic);
+    console.log('useWebSocket - selectTopic called with topic:', topic);
+    
+    // IMPORTANT: Use a function to update the state to ensure we're using the latest state
+    setSelectedTopic(prevTopic => {
+      console.log('useWebSocket - Previous selected topic:', prevTopic);
+      console.log('useWebSocket - Setting new selected topic:', topic);
+      return topic;
+    });
     
     // Store the new subscription info
     subscriptionsRef.current = {
@@ -182,7 +190,12 @@ const useWebSocket = () => {
         market: `${topic.id}-no-usd`
       }));
     }
-  }, []);
+  }, []); // Keep the dependency array empty to avoid re-creating this function
+
+  // Add a debugging effect to log when selectedTopic changes
+  useEffect(() => {
+    console.log('useWebSocket - selectedTopic state changed to:', selectedTopic);
+  }, [selectedTopic]);
 
   // Connect on mount and handle visibility changes
   useEffect(() => {

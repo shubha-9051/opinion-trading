@@ -1,38 +1,27 @@
-import { useState } from 'react';
-import '../styles/TopicSelector.css';
+import { useWebSocketContext } from "../context/useWebSocketContext";
+import "../styles/TopicSelector.css";
 
-function TopicSelector({ topics, selectedTopic, onSelect }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const handleSelectTopic = (topicId) => {
-    const topic = {
-      id: topicId,
-      ...topics[topicId]
-    };
-    onSelect(topic);
-    setIsOpen(false);
-  };
-  
+function TopicSelector() {
+  const { topics, selectedTopic, selectTopic } = useWebSocketContext();
+
+  if (!topics || Object.keys(topics).length === 0) return null;
+
   return (
     <div className="topic-selector">
-      <div className="selector-button" onClick={() => setIsOpen(!isOpen)}>
-        <span>{selectedTopic?.name || "Select Topic"}</span>
-        <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
-      </div>
-      
-      {isOpen && (
-        <div className="dropdown-menu">
-          {Object.entries(topics).map(([id, topic]) => (
-            <div 
-              key={id}
-              className={`topic-item ${selectedTopic?.id === id ? 'selected' : ''}`}
-              onClick={() => handleSelectTopic(id)}
-            >
-              {topic.name}
-            </div>
-          ))}
-        </div>
-      )}
+      <select
+        className="topic-selector-select"
+        value={selectedTopic?.id || ""}
+        onChange={e => {
+          const topicId = e.target.value;
+          if (topicId && topics[topicId]) {
+            selectTopic({ id: topicId, ...topics[topicId] });
+          }
+        }}
+      >
+        {Object.entries(topics).map(([id, topic]) => (
+          <option key={id} value={id}>{topic.name}</option>
+        ))}
+      </select>
     </div>
   );
 }

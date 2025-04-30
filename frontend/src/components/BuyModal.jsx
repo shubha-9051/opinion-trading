@@ -10,8 +10,16 @@ function BuyModal({
   topicQuestion, 
   yesOrderbook, 
   noOrderbook,
-  onOrderResponse  // Add this prop for handling responses
+  onOrderResponse
 }) {
+  // Add console log to verify props
+  console.log('BuyModal rendering with props:', { 
+    isOpen, 
+    topicId, 
+    initialShareType, 
+    topicQuestion 
+  });
+
   const [shareType, setShareType] = useState(initialShareType);
   const [price, setPrice] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -21,6 +29,23 @@ function BuyModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // CRITICAL: Reset state when topicId or initialShareType changes
+  // This ensures the modal resets properly for each new topic
+  useEffect(() => {
+    console.log('BuyModal - topicId or initialShareType changed:', topicId, initialShareType);
+    
+    if (isOpen) {
+      setShareType(initialShareType);
+      
+      const defaultPrice = initialShareType === 'yes' ? 7.0 : 3.0;
+      setPrice(defaultPrice);
+      setSliderValue(initialShareType === 'yes' ? 70 : 30);
+      
+      setQuantity(1);
+      setError(null);
+    }
+  }, [isOpen, topicId, initialShareType]); // Include topicId as dependency
+
   // Calculate potential profit
   const potentialReturn = quantity * 10; // Assuming max return is 10 per share
 
@@ -28,10 +53,6 @@ function BuyModal({
   useEffect(() => {
     if (isOpen) {
       const orderbook = shareType === 'yes' ? yesOrderbook : noOrderbook;
-      
-      // Default prices based on orderbook or fallback values
-      const defaultPrice = shareType === 'yes' ? 7.0 : 3.0;
-      setPrice(defaultPrice);
       
       // Set available quantity based on orderbook
       if (orderbook && orderbook.asks && orderbook.asks.length > 0) {
@@ -41,11 +62,11 @@ function BuyModal({
       } else {
         setMaxQuantity(100); // Default if no data
       }
-      
-      setQuantity(1);
     }
   }, [isOpen, shareType, yesOrderbook, noOrderbook]);
 
+  // Rest of your BuyModal component code...
+  
   // Switch between Yes and No share types
   const toggleShareType = (type) => {
     if (type !== shareType) {
@@ -63,7 +84,7 @@ function BuyModal({
     }
   };
 
-  // Fix: Properly define the handlePriceSliderChange function
+  // Handle price slider changes
   const handlePriceSliderChange = (e) => {
     const value = parseInt(e.target.value);
     setSliderValue(value);
@@ -107,6 +128,7 @@ function BuyModal({
   };
 
   const handleSubmit = async () => {
+    // Your submit handler code...
     if (!currentUser) {
       setError('You need to be logged in to place orders');
       return;
@@ -206,7 +228,7 @@ function BuyModal({
                 min="0"
                 max="100"
                 value={sliderValue}
-                onChange={handlePriceSliderChange}  // This line was causing the error
+                onChange={handlePriceSliderChange}
                 className="price-slider"
               />
               <button 

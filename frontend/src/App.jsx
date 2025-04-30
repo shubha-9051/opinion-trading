@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import TopicDisplay from './components/TopicDisplay';
 import ProbabilityGraph from './components/ProbabilityGraph';
 import OrderBook from './components/OrderBook';
-import BuyButtons from './components/BuyButtons';
+import BuySection from './components/BuySection';
 import TopicDetails from './components/TopicDetails';
 import TopicSelector from './components/TopicSelector';
 import useWebSocket from './hooks/useWebSocket';
 import { useAuth } from './context/AuthContext';
+import  {WebSocketContext}  from './context/useWebSocketContext';
 import './styles/App.css';
 
 function App() {
+  const ws = useWebSocket(); // Only one instance!
   const {
     isConnected,
     topics,
@@ -20,37 +22,29 @@ function App() {
     error,
     selectTopic,
     reconnectAttempt
-  } = useWebSocket();
+  } = ws;
 
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
-  
-  // Remove hardcoded balance - we'll use the dynamic one from BuyButtons
 
-  // Check authentication
   useEffect(() => {
     if (!currentUser) {
       navigate('/signin');
     }
   }, [currentUser, navigate]);
 
-  // Handle logout
   const handleLogout = () => {
     logout();
     navigate('/signin');
   };
 
-  // Use mock data for development when the connection fails
   const useMockData = !isConnected && reconnectAttempt > 2;
-  
-  // Mock data for development when server is unavailable
   const mockTopic = {
     id: 'mock-1',
     name: "Example Topic (Server Offline)",
     description: "This is mock data shown because the WebSocket server is unavailable.",
     expiresAt: "2024-12-31"
   };
-  
   const mockYesOrderbook = {
     asks: [
       { price: 0.65, quantity: 25.5 },
@@ -67,7 +61,6 @@ function App() {
       { price: 0.56, quantity: 26.7 }
     ]
   };
-  
   const mockNoOrderbook = {
     asks: [
       { price: 0.40, quantity: 22.4 },
@@ -84,13 +77,11 @@ function App() {
       { price: 0.31, quantity: 25.3 }
     ]
   };
-  
-  // Use either real data or mock data
+
   const displayTopic = useMockData ? mockTopic : selectedTopic;
   const displayYesOrderbook = useMockData ? mockYesOrderbook : yesOrderbook;
   const displayNoOrderbook = useMockData ? mockNoOrderbook : noOrderbook;
 
-  // Loading state
   if (!displayTopic) {
     return (
       <div className="app loading">
@@ -99,14 +90,12 @@ function App() {
             <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}></span>
             {isConnected ? 'Connected, loading data...' : `Connecting to server (attempt ${reconnectAttempt})...`}
           </div>
-          
           {error && (
             <div className="error-message">
               <p>{error}</p>
               <p className="error-help">Make sure your WebSocket server is running on localhost:8080</p>
             </div>
           )}
-          
           <div className="loading-message">
             <p>{isConnected ? 'Loading topics...' : 'Waiting for connection...'}</p>
           </div>
@@ -116,69 +105,57 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <div className="header">
-        <div className="header-left">
-          <div className="connection-status">
-            <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}></span>
-            {isConnected ? 'Connected' : `Connection lost (retry ${reconnectAttempt})...`}
+    <WebSocketContext.Provider value={ws}>
+      <div className="app">
+        <div className="header">
+          <div className="header-left">
+            <div className="connection-status">
+              <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}></span>
+              {isConnected ? 'Connected' : `Connection lost (retry ${reconnectAttempt})...`}
+            </div>
+            {Object.keys(topics).length > 0 && (
+              <TopicSelector />
+            )}
           </div>
-          
-          {Object.keys(topics).length > 0 && (
-            <TopicSelector 
-              topics={topics} 
-              selectedTopic={selectedTopic} 
-              onSelect={selectTopic} 
+          <div className="header-right">
+            <div className="user-info">
+              <span className="user-name">
+                {currentUser?.name || currentUser?.email || 'User'}
+              </span>
+              <button className="logout-button" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+        {useMockData && (
+          <div className="mock-data-notice">
+            <p>⚠️ Displaying mock data - WebSocket server unavailable</p>
+          </div>
+        )}
+        <div className="container">
+          <TopicDisplay topic={displayTopic} />
+          <div className="graph-container">
+            <ProbabilityGraph />
+          </div>
+          <div className="orderbooks-container">
+            <OrderBook 
+              type="yes" 
+              asks={displayYesOrderbook.asks || []} 
+              bids={displayYesOrderbook.bids || []} 
             />
-          )}
-        </div>
-        
-        <div className="header-right">
-          {/* We'll remove this balance display since BuyButtons will handle it */}
-          <div className="user-info">
-            <span className="user-name">
-              {currentUser?.name || currentUser?.email || 'User'}
-            </span>
-            <button className="logout-button" onClick={handleLogout}>
-              Logout
-            </button>
+            <OrderBook 
+              type="no" 
+              asks={displayNoOrderbook.asks || []} 
+              bids={displayNoOrderbook.bids || []} 
+            />
           </div>
+          <TopicDetails topic={displayTopic} />
         </div>
+        <BuySection />
+        {error && !useMockData && <div className="error-message">{error}</div>}
       </div>
-      
-      {useMockData && (
-        <div className="mock-data-notice">
-          <p>⚠️ Displaying mock data - WebSocket server unavailable</p>
-        </div>
-      )}
-      
-      <div className="container">
-        <TopicDisplay topic={displayTopic} />
-        
-        <div className="graph-container">
-          <ProbabilityGraph />
-        </div>
-        
-        <div className="orderbooks-container">
-          <OrderBook 
-            type="yes" 
-            asks={displayYesOrderbook.asks || []} 
-            bids={displayYesOrderbook.bids || []} 
-          />
-          <OrderBook 
-            type="no" 
-            asks={displayNoOrderbook.asks || []} 
-            bids={displayNoOrderbook.bids || []} 
-          />
-        </div>
-        
-        <TopicDetails topic={displayTopic} />
-      </div>
-      
-      <BuyButtons />
-      
-      {error && !useMockData && <div className="error-message">{error}</div>}
-    </div>
+    </WebSocketContext.Provider>
   );
 }
 
