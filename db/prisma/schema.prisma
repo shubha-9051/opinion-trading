@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"   // <- relative path where you want Prisma Client
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Add your PostgreSQL connection string in .env
+}
+
+
+
+model User {
+  id          Int       @id @default(autoincrement())
+  username    String    @unique
+  email       String    @unique
+  password    String    // Store hashed password
+  balance     Decimal   @default(0.0) @db.Decimal(18, 8)  // USD balance
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  orders      Order[]
+  balances    UserBalance[]
+  buyTrades   Trade[]   @relation("BuyerTrades")
+  sellTrades  Trade[]   @relation("SellerTrades")
+}
+
+model Topic {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique  // E.g., "Will it rain tomorrow?"
+  description String?   @db.Text
+  resolution  Resolution @default(PENDING)  // Current resolution status
+  expiresAt   DateTime? // Optional expiration date
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  orders      Order[]
+  trades      Trade[]
+  balances    UserBalance[]
+}
+
+model UserBalance {
+  id          Int       @id @default(autoincrement())
+  yesShares   Decimal   @default(0.0) @db.Decimal(18, 8)  // Number of YES shares
+  noShares    Decimal   @default(0.0) @db.Decimal(18, 8)  // Number of NO shares
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  topic       Topic     @relation(fields: [topicId], references: [id])
+  topicId     Int
+  
+  // Ensure one balance record per user per topic
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@index([topicId])
+}
+
+model Order {
+  id                Int          @id @default(autoincrement())
+  price             Decimal      @db.Decimal(18, 8)  // Price per share
+  quantity          Decimal      @db.Decimal(18, 8)  // Initial quantity
+  remainingQuantity Decimal      @db.Decimal(18, 8)  // Remaining quantity
+  side              OrderSide    // BUY or SELL
+  shareType         ShareType    // YES or NO
+  status            OrderStatus  @default(OPEN)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  // Relations
+  user              User         @relation(fields: [userId], references: [id])
+  userId            Int
+  topic             Topic        @relation(fields: [topicId], references: [id])
+  topicId           Int
+  
+  // Indexes for faster queries
+  @@index([userId])
+  @@index([topicId, status, side, shareType]) // For orderbook queries
+  @@index([createdAt])
+}
+
+model Trade {
+  id          Int       @id @default(autoincrement())
+  price       Decimal   @db.Decimal(18, 8)  // Price per share
+  quantity    Decimal   @db.Decimal(18, 8)  // Quantity traded
+  shareType   ShareType // YES or NO
+  tradeTime   DateTime  @default(now())
+  
+  // Relations
+  buyer       User      @relation("BuyerTrades", fields: [buyerId], references: [id])
+  buyerId     Int
+  seller      User      @relation("SellerTrades", fields: [sellerId], references: [id])
+  sellerId    Int
+  topic       Topic     @relation(fields: [topicId], references: [id])
+  topicId     Int
+  
+  // Indexes for faster queries
+  @@index([topicId, tradeTime])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+// Enums
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum ShareType {
+  YES
+  NO
+}
+
+enum OrderStatus {
+  OPEN
+  FILLED
+  PARTIALLY_FILLED
+  CANCELED
+}
+
+enum Resolution {
+  PENDING
+  RESOLVED_YES
+  RESOLVED_NO
+  CANCELED
+}

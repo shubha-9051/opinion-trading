@@ -1,0 +1,127 @@
+.orderbook {
+    flex: 1;
+    background-color: var(--card-background);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+  }
+  
+  .orderbook-title {
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .orderbook-title.yes {
+    color: var(--yes-color);
+  }
+  
+  .orderbook-title.no {
+    color: var(--no-color);
+  }
+  
+  .orderbook-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .orderbook-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: var(--card-background);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+  }
+  
+  .orderbook-asks {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .orderbook-bids {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border-color);
+    margin-top: 2px;
+  }
+  
+  .orderbook-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 6px 16px;
+    position: relative;
+    transition: background-color 0.2s;
+  }
+  
+  .orderbook-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Color coding for ask/bid rows */
+  .orderbook-row.ask {
+    color: var(--ask-color);
+  }
+  
+  .orderbook-row.bid {
+    color: var(--bid-color);
+  }
+  
+  .orderbook-row.placeholder {
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+  
+  /* For the depth visualization */
+  .orderbook-row {
+    position: relative;
+  }
+  
+  .orderbook-row .depth-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 0;
+  }
+  
+  .orderbook-row.ask .depth-bar {
+    background-color: rgba(246, 70, 93, 0.2);
+  }
+  
+  .orderbook-row.bid .depth-bar {
+    background-color: rgba(14, 203, 129, 0.2);
+  }
+  
+  .orderbook-row .price,
+  .orderbook-row .quantity {
+    position: relative;
+    z-index: 1;
+    font-family: monospace;
+    font-size: 14px;
+  }
+  
+  .orderbook-row .price {
+    text-align: left;
+    font-weight: 600;
+  }
+  
+  .orderbook-row .quantity {
+    text-align: right;
+  }
+  
+  /* Empty state */
+  .orderbook-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+  }

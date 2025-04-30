@@ -1,0 +1,10 @@
+.topic-display {
+    text-align: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .topic-display h1 {
+    font-size: 24px;
+    font-weight: 600;
+  }

@@ -1,0 +1,21 @@
+.probability-graph {
+    height: 200px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .probability-graph .placeholder {
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 18px;
+  }
+  
+  .probability-graph .placeholder p {
+    font-size: 14px;
+    margin-top: 10px;
+  }
