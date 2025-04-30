@@ -180,7 +180,7 @@ class ExchangeEngine {
           console.log(`Processing event from client ${clientId}: ${event.type}`);
           
           // Process the event
-          const response = await this.processEvent(event);
+          const response = await this.processEvent(event, clientId);
           
           // Publish the response to the pub/sub channel
           await this.redisClient.publish(clientId, JSON.stringify({
@@ -199,22 +199,22 @@ class ExchangeEngine {
     }
   }
 
-  async processEvent(message) {
+  async processEvent(message, clientId) {
     const { type, data } = message;
     
     let response;
     switch (type) {
       case "CREATE_ORDER":
-        response = await this.handleCreateOrder(data);
+        response = await this.handleCreateOrder(data, clientId);
         break;
       case "CANCEL_ORDER":
-        response = this.handleCancelOrder(data);
+        response = await this.handleCancelOrder(data, clientId);
         break;
       case "GET_OPEN_ORDER":
-        response = this.handleGetOpenOrder(data);
+        response = await this.handleGetOpenOrder(data);
         break;
       case "ON_RAMP":
-        response = this.handleOnRamp(data);
+        response = await this.handleOnRamp(data, clientId);
         break;
       default:
         response = { type: "ERROR", data: { message: "Unknown event type" } };
@@ -226,7 +226,21 @@ class ExchangeEngine {
     return response;
   }
 
-  async handleCreateOrder({ market, price, quantity, side, userId, shareType = "yes" }) {
+  // Get user balance information to include in responses
+  getUserBalanceInfo(userId) {
+    if (!this.balances[userId]) {
+      return null;
+    }
+    
+    return {
+      userId,
+      balances: { ...this.balances[userId] }
+    };
+  }
+
+  async handleCreateOrder(data, clientId) {
+    const { market, price, quantity, side, userId, shareType = "yes" } = data;
+    
     // Parse the market to get the topic ID
     // Assuming market format: topicId-yes/no-usd
     const [topicId, shareTypeFromMarket] = market.split('-');
@@ -295,6 +309,9 @@ class ExchangeEngine {
     const matchedOrders = [];
     let remainingQuantity = quantity;
     
+    // Track affected users to include their balance in the response
+    const affectedUsers = new Set([userId]);
+    
     // Try to match the order with existing orders
     for (let i = 0; i < matches.length && remainingQuantity > 0; i++) {
       const match = matches[i];
@@ -304,6 +321,9 @@ class ExchangeEngine {
         const matchedQuantity = Math.min(remainingQuantity, match.quantity);
         remainingQuantity -= matchedQuantity;
         match.quantity -= matchedQuantity;
+        
+        // Add counterparty to affected users
+        affectedUsers.add(match.userId);
         
         // Update balances for the matched order
         const counterpartyAsset = side === "buy" 
@@ -408,8 +428,19 @@ class ExchangeEngine {
       }
     }
     
-    // Publish trade details for each matched order
-    matchedOrders.forEach((trade) => this.publishTrade(market, trade));
+    // Collect balance information for all affected users
+    const userBalances = {};
+    for (const userId of affectedUsers) {
+      userBalances[userId] = this.getUserBalanceInfo(userId);
+    }
+    
+    // Publish trade details for each matched order along with balance info
+    matchedOrders.forEach((trade) => {
+      this.publishTradeWithBalances(market, trade, {
+        [trade.buyer]: userBalances[trade.buyer],
+        [trade.seller]: userBalances[trade.seller]
+      });
+    });
     
     // Publish the updated orderbook
     this.publishOrderbook(market);
@@ -425,7 +456,8 @@ class ExchangeEngine {
           side,
           status: "filled",
           matchedOrders,
-        },
+          userBalance: userBalances[userId]
+        }
       };
     }
     
@@ -478,13 +510,16 @@ class ExchangeEngine {
           status: matchedOrders.length > 0 ? "partially_filled" : "open",
           remainingQuantity,
           matchedOrders,
-          orderId
-        },
+          orderId,
+          userBalance: userBalances[userId]
+        }
       };
     }
   }
 
-  handleCancelOrder({ orderId, userId }) {
+  async handleCancelOrder(data, clientId) {
+    const { orderId, userId } = data;
+    
     // Find the order in all orderbooks
     let foundOrder = null;
     let foundMarket = null;
@@ -558,11 +593,18 @@ class ExchangeEngine {
     
     return {
       type: "ORDER_CANCELED",
-      data: { market: foundMarket, orderId, status: "canceled" },
+      data: { 
+        market: foundMarket, 
+        orderId, 
+        status: "canceled",
+        userBalance: this.getUserBalanceInfo(userId)
+      }
     };
   }
 
-  handleGetOpenOrder({ market, userId }) {
+  async handleGetOpenOrder(data) {
+    const { market, userId } = data;
+    
     // If market is not specified, get all orders for the user
     if (!market) {
       const allOrders = [];
@@ -577,7 +619,11 @@ class ExchangeEngine {
       
       return {
         type: "OPEN_ORDERS",
-        data: { userId, orders: allOrders },
+        data: { 
+          userId, 
+          orders: allOrders,
+          userBalance: this.getUserBalanceInfo(userId)
+        }
       };
     }
     
@@ -588,11 +634,18 @@ class ExchangeEngine {
     
     return {
       type: "OPEN_ORDERS",
-      data: { market, userId, orders: [...userBids, ...userAsks] },
+      data: { 
+        market, 
+        userId, 
+        orders: [...userBids, ...userAsks],
+        userBalance: this.getUserBalanceInfo(userId)
+      }
     };
   }
 
-  handleOnRamp({ userId, asset, amount }) {
+  async handleOnRamp(data, clientId) {
+    const { userId, asset, amount } = data;
+    
     // Initialize user balance if not already loaded
     if (!this.balances[userId]) {
       this.balances[userId] = {};
@@ -619,7 +672,12 @@ class ExchangeEngine {
     
     return {
       type: "ON_RAMP_SUCCESS",
-      data: { userId, asset, amount, balance: this.balances[userId][asset] },
+      data: { 
+        userId, 
+        asset, 
+        amount, 
+        userBalance: this.getUserBalanceInfo(userId)
+      }
     };
   }
 
@@ -635,51 +693,52 @@ class ExchangeEngine {
   }
 
   publishOrderbook(market) {
-  const orderbook = this.getOrderbook(market);
-  
-  // Aggregate bids by price
-  const aggregatedBids = this.aggregateOrdersByPrice(orderbook.bids);
-  
-  // Aggregate asks by price
-  const aggregatedAsks = this.aggregateOrdersByPrice(orderbook.asks);
-  
-  // Format the orderbook
-  const formattedOrderbook = {
-    market,
-    bids: aggregatedBids,
-    asks: aggregatedAsks,
-  };
-  
-  // Publish the orderbook to the market-specific channel
-  const channel = `orderbook_${market}`;
-  this.redisClient.publish(channel, JSON.stringify(formattedOrderbook));
-}
+    const orderbook = this.getOrderbook(market);
+    
+    // Aggregate bids by price
+    const aggregatedBids = this.aggregateOrdersByPrice(orderbook.bids);
+    
+    // Aggregate asks by price
+    const aggregatedAsks = this.aggregateOrdersByPrice(orderbook.asks);
+    
+    // Format the orderbook
+    const formattedOrderbook = {
+      market,
+      bids: aggregatedBids,
+      asks: aggregatedAsks
+    };
+    
+    // Publish the orderbook to the market-specific channel
+    const channel = `orderbook_${market}`;
+    this.redisClient.publish(channel, JSON.stringify(formattedOrderbook));
+  }
 
-// Helper method to aggregate orders by price
-aggregateOrdersByPrice(orders) {
-  // Use a Map to group orders by price
-  const priceMap = new Map();
-  
-  // Sum quantities for each price level
-  orders.forEach(order => {
-    const price = order.price;
-    if (!priceMap.has(price)) {
-      priceMap.set(price, 0);
-    }
-    priceMap.set(price, priceMap.get(price) + order.quantity);
-  });
-  
-  // Convert Map to array of price/quantity objects
-  const aggregated = Array.from(priceMap.entries()).map(([price, quantity]) => ({
-    price,
-    quantity
-  }));
-  
-  // Sort by price (descending for bids, ascending for asks would be handled by the caller)
-  return aggregated;
-}
+  // Helper method to aggregate orders by price
+  aggregateOrdersByPrice(orders) {
+    // Use a Map to group orders by price
+    const priceMap = new Map();
+    
+    // Sum quantities for each price level
+    orders.forEach(order => {
+      const price = order.price;
+      if (!priceMap.has(price)) {
+        priceMap.set(price, 0);
+      }
+      priceMap.set(price, priceMap.get(price) + order.quantity);
+    });
+    
+    // Convert Map to array of price/quantity objects
+    const aggregated = Array.from(priceMap.entries()).map(([price, quantity]) => ({
+      price,
+      quantity
+    }));
+    
+    // Sort by price (descending for bids, ascending for asks would be handled by the caller)
+    return aggregated;
+  }
 
-  publishTrade(market, tradeDetails) {
+  // Updated to include balance information with trade details
+  publishTradeWithBalances(market, tradeDetails, userBalances) {
     // Format the trade details
     const formattedTrade = {
       market,
@@ -688,6 +747,7 @@ aggregateOrdersByPrice(orders) {
       buyer: tradeDetails.buyer,
       seller: tradeDetails.seller,
       timestamp: Date.now(),
+      userBalances  // Include balance information
     };
     
     // Publish the trade to the market-specific channel

@@ -1,68 +1,66 @@
+/* src/styles/UserBalance.css */
 .user-balance {
-    background-color: var(--card-background);
-    border-radius: var(--border-radius);
-    padding: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    width: 100%;
-    max-width: 300px;
-    margin-bottom: 20px;
-  }
-  
-  .user-balance h3 {
-    font-size: 16px;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    font-weight: 600;
-  }
-  
-  .balance-loading {
-    color: var(--text-secondary);
-    font-style: italic;
-    font-size: 14px;
-  }
-  
-  .balance-error {
-    color: var(--ask-color);
-    font-size: 14px;
-  }
-  
-  .balance-details {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .balance-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 15px;
-  }
-  
-  .balance-label {
-    color: var(--text-secondary);
-  }
-  
-  .balance-value {
-    font-weight: 600;
-    color: var(--text-color);
-    font-family: monospace;
-  }
-  
-  .balance-value.yes {
-    color: var(--yes-color);
-  }
-  
-  .balance-value.no {
-    color: var(--no-color);
-  }
-  
-  .balance-value.pending {
-    color: #ffc107; /* amber color for pending */
-  }
-  
-  .balance-divider {
-    height: 1px;
-    background-color: var(--border-color);
-    margin: 6px 0;
-  }
+  background-color: #1f1f1f;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.user-balance h3 {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #e0e0e0;
+}
+
+.balance-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.balance-label {
+  color: #a0a0a0;
+}
+
+.balance-value {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.balance-value.pending {
+  color: #ffcc00;
+}
+
+.balance-value.yes {
+  color: #3a80ff;
+}
+
+.balance-value.no {
+  color: #ff4d6d;
+}
+
+.balance-divider {
+  height: 1px;
+  background-color: #333;
+  margin: 8px 0;
+}
+
+.balance-loading {
+  color: #888;
+  font-size: 14px;
+  padding: 10px 0;
+}
+
+.balance-error {
+  color: #ff4d6d;
+  font-size: 14px;
+  padding: 10px 0;
+}

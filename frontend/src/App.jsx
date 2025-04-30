@@ -25,13 +25,7 @@ function App() {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   
-  // User balance - in a real app this would come from your API
-  const [userBalance] = useState({
-    usd: 1250.75,
-    pendingUsd: 125.50,
-    yesShares: 75,
-    noShares: 38
-  });
+  // Remove hardcoded balance - we'll use the dynamic one from BuyButtons
 
   // Check authentication
   useEffect(() => {
@@ -140,32 +134,14 @@ function App() {
         </div>
         
         <div className="header-right">
-          <div className="user-balance-container">
-            <div className="balance-header">Your Balance</div>
-            <div className="balance-amount">${userBalance.usd.toFixed(2)}</div>
-            <div className="balance-details">
-              <div className="balance-item">
-                <span className="balance-label">Pending:</span>
-                <span className="balance-value pending">${userBalance.pendingUsd.toFixed(2)}</span>
-              </div>
-              <div className="balance-item">
-                <span className="balance-label">YES Shares:</span>
-                <span className="balance-value yes">{userBalance.yesShares}</span>
-              </div>
-              <div className="balance-item">
-                <span className="balance-label">NO Shares:</span>
-                <span className="balance-value no">{userBalance.noShares}</span>
-              </div>
-              
-              <div className="user-info">
-                <span className="user-name">
-                  {currentUser?.name || currentUser?.email || 'User'}
-                </span>
-                <button className="logout-button" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-            </div>
+          {/* We'll remove this balance display since BuyButtons will handle it */}
+          <div className="user-info">
+            <span className="user-name">
+              {currentUser?.name || currentUser?.email || 'User'}
+            </span>
+            <button className="logout-button" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         </div>
       </div>
