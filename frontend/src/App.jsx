@@ -6,12 +6,15 @@ import OrderBook from './components/OrderBook';
 import BuySection from './components/BuySection';
 import TopicDetails from './components/TopicDetails';
 import TopicSelector from './components/TopicSelector';
+import MyOrders from './components/MyOrders'; // Import the new component
 import useWebSocket from './hooks/useWebSocket';
 import { useAuth } from './context/AuthContext';
-import  {WebSocketContext}  from './context/useWebSocketContext';
+import { WebSocketContext } from './context/useWebSocketContext';
 import './styles/App.css';
 
 function App() {
+  const [showMyOrders, setShowMyOrders] = useState(false); // New state for toggling My Orders view
+  
   const ws = useWebSocket(); // Only one instance!
   const {
     isConnected,
@@ -119,6 +122,14 @@ function App() {
           </div>
           <div className="header-right">
             <div className="user-info">
+              {/* Add My Orders button here */}
+              <button 
+                className="my-orders-button" 
+                onClick={() => setShowMyOrders(true)}
+                disabled={!isConnected}
+              >
+                My Orders
+              </button>
               <span className="user-name">
                 {currentUser?.name || currentUser?.email || 'User'}
               </span>
@@ -133,26 +144,35 @@ function App() {
             <p>⚠️ Displaying mock data - WebSocket server unavailable</p>
           </div>
         )}
-        <div className="container">
-          <TopicDisplay topic={displayTopic} />
-          <div className="graph-container">
-            <ProbabilityGraph />
+        
+        {/* Toggle between main view and My Orders view */}
+        {showMyOrders ? (
+          <MyOrders onBack={() => setShowMyOrders(false)} />
+        ) : (
+          <div className="container">
+            <TopicDisplay topic={displayTopic} />
+            <div className="graph-container">
+              <ProbabilityGraph />
+            </div>
+            <div className="orderbooks-container">
+              <OrderBook 
+                type="yes" 
+                asks={displayYesOrderbook.asks || []} 
+                bids={displayYesOrderbook.bids || []} 
+              />
+              <OrderBook 
+                type="no" 
+                asks={displayNoOrderbook.asks || []} 
+                bids={displayNoOrderbook.bids || []} 
+              />
+            </div>
+            <TopicDetails topic={displayTopic} />
           </div>
-          <div className="orderbooks-container">
-            <OrderBook 
-              type="yes" 
-              asks={displayYesOrderbook.asks || []} 
-              bids={displayYesOrderbook.bids || []} 
-            />
-            <OrderBook 
-              type="no" 
-              asks={displayNoOrderbook.asks || []} 
-              bids={displayNoOrderbook.bids || []} 
-            />
-          </div>
-          <TopicDetails topic={displayTopic} />
-        </div>
-        <BuySection />
+        )}
+        
+        {/* Only show BuySection when not in My Orders view */}
+        {!showMyOrders && <BuySection />}
+        
         {error && !useMockData && <div className="error-message">{error}</div>}
       </div>
     </WebSocketContext.Provider>

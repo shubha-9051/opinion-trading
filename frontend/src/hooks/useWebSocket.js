@@ -12,6 +12,36 @@ const useWebSocket = () => {
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const subscriptionsRef = useRef({ yes: null, no: null });
+  const responseListenersRef = useRef({});
+
+  
+  // Function to send a message through the WebSocket
+  const sendMessage = useCallback((message) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(message));
+      return true;
+    } else {
+      console.error('WebSocket is not connected');
+      return false;
+    }
+  }, []);
+
+  // Function to add response listeners
+  const addResponseListener = useCallback((type, callback) => {
+    if (!responseListenersRef.current[type]) {
+      responseListenersRef.current[type] = [];
+    }
+    responseListenersRef.current[type].push(callback);
+  }, []);
+
+  // Function to remove response listeners
+  const removeResponseListener = useCallback((type, callback) => {
+    if (responseListenersRef.current[type]) {
+      responseListenersRef.current[type] = responseListenersRef.current[type].filter(
+        cb => cb !== callback
+      );
+    }
+  }, []);
 
   // Function to connect to WebSocket
   const connect = useCallback(() => {
@@ -103,6 +133,20 @@ const useWebSocket = () => {
               }
               break;
             
+            // Check for order-related responses and notify listeners
+            case 'OPEN_ORDERS':
+            case 'ORDER_EXECUTED':
+            case 'ORDER_PARTIALLY_FILLED':
+            case 'ORDER_CANCELED':
+            case 'ON_RAMP_SUCCESS':
+              // If we have listeners for this message type, call them
+              if (responseListenersRef.current[message.type]) {
+                responseListenersRef.current[message.type].forEach(callback => {
+                  callback(message);
+                });
+              }
+              break;
+              
             case 'error':
               console.error('Server error:', message.message);
               setError(message.message);
@@ -110,6 +154,12 @@ const useWebSocket = () => {
             
             default:
               console.log('Unhandled message type:', message.type);
+              // Check if there are listeners for this message type
+              if (responseListenersRef.current[message.type]) {
+                responseListenersRef.current[message.type].forEach(callback => {
+                  callback(message);
+                });
+              }
           }
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);
@@ -238,7 +288,13 @@ const useWebSocket = () => {
     noOrderbook,
     error,
     selectTopic,
-    reconnectAttempt
+    reconnectAttempt,
+    // Add the new methods
+    sendMessage,
+    addResponseListener,
+    removeResponseListener,
+    // Expose the socket for direct usage if needed (though better to use the methods above)
+    socket: socketRef.current
   };
 };
 

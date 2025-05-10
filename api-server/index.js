@@ -12,7 +12,8 @@ app.use(bodyParser.json());
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // Add this if you're using cookies/sessions
 }));
 // Use the /order route
 app.use("/order", orderRouter);

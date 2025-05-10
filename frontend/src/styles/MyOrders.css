@@ -1,0 +1,259 @@
+.my-orders {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.my-orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  padding: 8px 16px;
+  background-color: #f1f1f1;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #ddd;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-style: italic;
+  color: #666;
+}
+
+.error-message {
+  background-color: #ffe6e6;
+  border: 1px solid #ff8080;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  color: #d00;
+}
+
+.user-shares {
+  margin-bottom: 30px;
+}
+
+.no-data {
+  font-style: italic;
+  color: #666;
+  padding: 10px 0;
+}
+
+.shares-list table, .orders-list table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.shares-list th, .orders-list th {
+  background-color: #f5f5f5;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #ddd;
+}
+
+.shares-list td, .orders-list td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.shares-list tr:hover, .orders-list tr:hover {
+  background-color: #f9f9f9;
+}
+
+.sell-button, .cancel-order-button, .add-funds-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sell-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.sell-button:hover {
+  background-color: #45a049;
+}
+
+.cancel-order-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.cancel-order-button:hover {
+  background-color: #d32f2f;
+}
+
+.balance-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  border: 1px solid #b3e0ff;
+}
+
+.add-funds-button {
+  background-color: #2196F3;
+  color: white;
+  margin-left: 15px;
+}
+
+.add-funds-button:hover {
+  background-color: #0b7dda;
+}
+
+.usd-balance {
+  margin-top: 15px;
+}
+
+.usd-balance h3 {
+  margin: 0;
+  color: #333;
+}
+
+.onramp-form {
+  margin: 15px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.onramp-form h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.onramp-status {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+}
+
+.sell-form {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #2196F3;
+  outline: none;
+}
+
+.submit-button {
+  padding: 10px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 10px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+  background-color: #45a049;
+}
+
+.cancel-button {
+  padding: 10px 16px;
+  background-color: #f1f1f1;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #ddd;
+}
+
+.sell-status {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+}
+
+.buy {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.sell {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .my-orders {
+    padding: 10px;
+  }
+  
+  .shares-list table, .orders-list table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .balance-display {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .add-funds-button {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}

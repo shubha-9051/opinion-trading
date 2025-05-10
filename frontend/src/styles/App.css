@@ -149,3 +149,33 @@ body {
   }
 }
 /* Add other existing styles */
+
+.my-orders-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 15px;
+  font-size: 14px;
+}
+
+.my-orders-button:hover {
+  background-color: #1976d2;
+}
+
+.my-orders-button:disabled {
+  background-color: #bbdefb;
+  cursor: not-allowed;
+}
+
+/* Adjust the existing user-info class to accommodate the new button */
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-name {
+  margin: 0 15px;
+}

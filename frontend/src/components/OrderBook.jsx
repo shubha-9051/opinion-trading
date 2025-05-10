@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import '../styles/OrderBook.css';
 
+
 function OrderBook({ type, asks, bids }) {
   // Sort orders: asks ascending by price, bids descending by price
   const sortedAsks = useMemo(() => {
