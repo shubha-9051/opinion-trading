@@ -118,11 +118,8 @@ const MyOrders = ({ onBack }) => {
               Object.entries(balances).forEach(([asset, amount]) => {
                 if (combinedBalances[asset] === undefined) {
                   combinedBalances[asset] = amount;
-                } else if (asset === 'USD') {
-                  // Only take the highest USD balance to avoid double-counting
-                  combinedBalances[asset] = Math.max(combinedBalances[asset], amount);
                 } else {
-                  combinedBalances[asset] = (combinedBalances[asset] || 0) + amount;
+                  combinedBalances[asset] = Math.max(combinedBalances[asset], amount);
                 }
               });
             }
@@ -456,7 +453,7 @@ const MyOrders = ({ onBack }) => {
                     type="number" 
                     step="0.01" 
                     min="0.01" 
-                    max="0.99" 
+                    max="10" 
                     value={sellPrice} 
                     onChange={(e) => setSellPrice(e.target.value)} 
                     required
